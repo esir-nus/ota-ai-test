@@ -1,0 +1,8 @@
+{
+    "product_type": "robot_ai",
+    "version": "1.0.0",
+    "update_server": "https://updates.robot-ai.example.com",
+    "update_check_times": ["03:00", "04:00", "05:00"],
+    "backup_retention_count": 2,
+    "device_id": "TEST-DEVICE-1234"
+  }

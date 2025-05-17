@@ -1,0 +1,17 @@
+[Unit]
+Description=Robot-AI OTA Daemon
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/robot-ai
+ExecStart=/usr/bin/python3 /opt/robot-ai/OTA/daemon/main.py
+Restart=on-failure
+RestartSec=5
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=robot-ai-ota
+
+[Install]
+WantedBy=multi-user.target 

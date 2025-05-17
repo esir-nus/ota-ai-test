@@ -1,0 +1,10 @@
+# OTA Daemon Requirements
+
+# Core dependencies
+pyyaml>=6.0         # YAML parsing for configuration
+python-crontab>=2.6.0  # Crontab management for scheduled updates
+psutil>=5.9.0       # System monitoring and resource checking
+requests>=2.28.0    # HTTP/HTTPS client for OTA server communication
+
+# For voice command processing
+# We rely on the existing Qwen integration from the main robot-ai project 
