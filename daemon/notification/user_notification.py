@@ -1,55 +1,49 @@
 """
-User Notification System for the OTA daemon.
+User notification system for the OTA daemon.
 
-This module handles displaying notifications to users about OTA updates,
-including update availability, installation scheduling, and results.
+This module handles sending notifications to the user through various channels,
+including the GUI interface.
 """
 
+import datetime
+import enum
 import json
 import logging
 import os
-from enum import Enum
+import socket
 from pathlib import Path
 from typing import Dict, Any, Optional
-import socket
-import datetime
 
 logger = logging.getLogger("ota-daemon.notification")
 
-# Constants for notification files
-NOTIFICATION_DIR = Path("/var/lib/robot-ai/notifications")
-UPDATE_NOTIFICATION_FLAG = NOTIFICATION_DIR / "update_available.json"
+# Directory for notification flags
+NOTIFICATION_DIR = Path("/var/lib/robot-ai-ota/notifications")
 UPDATE_PROGRESS_FLAG = NOTIFICATION_DIR / "update_progress.json"
 UPDATE_RESULT_FLAG = NOTIFICATION_DIR / "update_result.json"
-RELEASE_NOTES_FILE = Path("/release_notes.txt")
 
-class NotificationType(Enum):
-    """Types of notifications that can be displayed."""
+class NotificationType(enum.Enum):
+    """Types of notifications that can be sent."""
     UPDATE_AVAILABLE = "update_available"
     UPDATE_SCHEDULED = "update_scheduled"
     UPDATE_IN_PROGRESS = "update_in_progress"
     UPDATE_COMPLETED = "update_completed"
     UPDATE_FAILED = "update_failed"
-    ROLLBACK_AVAILABLE = "rollback_available"
-    ROLLBACK_COMPLETED = "rollback_completed"
 
-class UpdateSeverity(Enum):
+class UpdateSeverity(enum.Enum):
     """Severity levels for updates."""
     CRITICAL = "critical"
-    SECURITY = "security"
     REGULAR = "regular"
-    FEATURE = "feature"
 
 class NotificationSystem:
     """Handles user notifications for the OTA daemon."""
     
-    def __init__(self, gui_socket_path: str = "/tmp/robot-ai-gui.sock"):
+    def __init__(self, gui_interface=None):
         """Initialize the notification system.
         
         Args:
-            gui_socket_path: Path to the Unix socket for communicating with the GUI.
+            gui_interface: The GUI interface for sending notifications.
         """
-        self.gui_socket_path = gui_socket_path
+        self.gui_interface = gui_interface
         
         # Ensure notification directory exists
         NOTIFICATION_DIR.mkdir(parents=True, exist_ok=True)
@@ -73,32 +67,32 @@ class NotificationSystem:
             True if the notification was created successfully, False otherwise.
         """
         try:
-            # Save release notes to file
-            with open(RELEASE_NOTES_FILE, "w") as f:
-                f.write(release_notes)
-            
             # Create notification data
             notification_data = {
                 "type": NotificationType.UPDATE_AVAILABLE.value,
                 "version": version,
                 "severity": severity.value,
                 "features": features,
+                "release_notes": release_notes,
                 "size_mb": size_mb,
                 "created_at": datetime.datetime.now().isoformat()
             }
             
             # Save notification data to flag file
-            with open(UPDATE_NOTIFICATION_FLAG, "w") as f:
+            with open(UPDATE_PROGRESS_FLAG, "w") as f:
                 json.dump(notification_data, f, indent=2)
             
-            logger.info(f"Created update notification for version {version}")
+            logger.info(f"Created update available notification for version {version}")
             
-            # Try to send notification to GUI via socket
-            self._send_notification_to_gui(notification_data)
+            # Send notification to GUI
+            if self.gui_interface:
+                self.gui_interface.send_status_update({
+                    "notification": notification_data
+                })
             
             return True
         except Exception as e:
-            logger.error(f"Error creating update notification: {str(e)}")
+            logger.error(f"Error creating update available notification: {str(e)}")
             return False
     
     def notify_update_scheduled(self, version: str, scheduled_time: str) -> bool:
@@ -126,8 +120,11 @@ class NotificationSystem:
             
             logger.info(f"Created update scheduled notification for version {version} at {scheduled_time}")
             
-            # Try to send notification to GUI via socket
-            self._send_notification_to_gui(notification_data)
+            # Send notification to GUI
+            if self.gui_interface:
+                self.gui_interface.send_status_update({
+                    "notification": notification_data
+                })
             
             return True
         except Exception as e:
@@ -159,8 +156,11 @@ class NotificationSystem:
             
             logger.debug(f"Created update in progress notification for version {version} ({progress}%)")
             
-            # Try to send notification to GUI via socket
-            self._send_notification_to_gui(notification_data)
+            # Send notification to GUI
+            if self.gui_interface:
+                self.gui_interface.send_status_update({
+                    "notification": notification_data
+                })
             
             return True
         except Exception as e:
@@ -194,8 +194,11 @@ class NotificationSystem:
             
             logger.info(f"Created update result notification for version {version} (success: {success})")
             
-            # Try to send notification to GUI via socket
-            self._send_notification_to_gui(notification_data)
+            # Send notification to GUI
+            if self.gui_interface:
+                self.gui_interface.send_status_update({
+                    "notification": notification_data
+                })
             
             return True
         except Exception as e:
@@ -251,7 +254,7 @@ class NotificationSystem:
             else:
                 # Clear specific notification type
                 if notification_type == NotificationType.UPDATE_AVAILABLE:
-                    UPDATE_NOTIFICATION_FLAG.unlink(missing_ok=True)
+                    UPDATE_PROGRESS_FLAG.unlink(missing_ok=True)
                 elif notification_type in [NotificationType.UPDATE_SCHEDULED, NotificationType.UPDATE_IN_PROGRESS]:
                     UPDATE_PROGRESS_FLAG.unlink(missing_ok=True)
                 elif notification_type in [NotificationType.UPDATE_COMPLETED, NotificationType.UPDATE_FAILED]:
@@ -273,24 +276,15 @@ class NotificationSystem:
         Returns:
             True if the notification was sent successfully, False otherwise.
         """
-        if not os.path.exists(self.gui_socket_path):
-            logger.debug(f"GUI socket {self.gui_socket_path} not found, skipping direct notification")
+        if not self.gui_interface:
+            logger.debug(f"GUI interface not found, skipping direct notification")
             return False
         
         try:
-            # Create a Unix socket
-            sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            sock.settimeout(2)  # 2 second timeout
-            
-            # Connect to the GUI socket
-            sock.connect(self.gui_socket_path)
-            
-            # Send the notification data
-            message = json.dumps({"notification": notification_data}).encode("utf-8")
-            sock.sendall(message)
-            
-            # Close the socket
-            sock.close()
+            # Send notification to GUI
+            self.gui_interface.send_status_update({
+                "notification": notification_data
+            })
             
             logger.debug(f"Sent notification to GUI: {notification_data['type']}")
             return True

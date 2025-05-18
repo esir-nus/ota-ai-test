@@ -1,29 +1,19 @@
 """
 Configuration manager for the OTA daemon.
 
-This module handles loading, validating, and accessing configuration settings
-for the OTA daemon.
+This module handles loading, saving, and managing the daemon's configuration.
 """
 
 import json
 import logging
 import os
-from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, Optional, List
+from datetime import datetime
 
 logger = logging.getLogger("ota-daemon.config")
 
 class ConfigManager:
     """Manages configuration for the OTA daemon."""
-    
-    DEFAULT_CONFIG = {
-        "product_type": "robot_ai",
-        "version": "1.0.0",
-        "update_server": "https://updates.robot-ai.example.com",
-        "update_check_times": ["03:00", "04:00", "05:00"],
-        "backup_retention_count": 2,
-        "device_id": None  # Will be generated if not provided
-    }
     
     def __init__(self, config_path: str = "/etc/ota_config.json"):
         """Initialize the configuration manager.
@@ -31,106 +21,185 @@ class ConfigManager:
         Args:
             config_path: Path to the configuration file.
         """
-        self.config_path = Path(config_path)
-        self.config = self.DEFAULT_CONFIG.copy()
-        self.load_config()
+        self.config_path = config_path
+        self._config = {}
+        self._load_config()
     
-    def load_config(self) -> None:
-        """Load configuration from the config file."""
+    def _load_config(self):
+        """Load configuration from file."""
         try:
-            if self.config_path.exists():
-                logger.info(f"Loading configuration from {self.config_path}")
+            if os.path.exists(self.config_path):
                 with open(self.config_path, 'r') as f:
-                    file_config = json.load(f)
-                    self.config.update(file_config)
-                logger.info("Configuration loaded successfully")
+                    self._config = json.load(f)
             else:
-                logger.warning(f"Configuration file {self.config_path} not found. Using defaults.")
-                self.save_config()  # Create default config file
+                # Create default configuration
+                self._config = {
+                    'product_type': 'robot_ai',
+                    'version': '1.0.0',
+                    'update_server': 'https://updates.robot-ai.example.com',
+                    'update_check_times': ['03:00', '04:00', '05:00'],
+                    'backup_retention_count': 2,
+                    'device_id': None,
+                    'last_check_time': None,
+                    'update_available': False,
+                    'available_version': None,
+                    'gui': {
+                        'socket_path': '/tmp/robot-ai-ota.sock',
+                        'notification_timeout': 30,  # seconds
+                        'status_update_interval': 5  # seconds
+                    }
+                }
+                self._save_config()
         except Exception as e:
             logger.error(f"Error loading configuration: {str(e)}")
-            logger.info("Using default configuration")
+            raise
     
-    def save_config(self) -> None:
-        """Save current configuration to the config file."""
+    def _save_config(self):
+        """Save configuration to file."""
         try:
-            # Ensure directory exists
-            self.config_path.parent.mkdir(parents=True, exist_ok=True)
+            # Create directory if it doesn't exist
+            os.makedirs(os.path.dirname(self.config_path), exist_ok=True)
             
-            logger.info(f"Saving configuration to {self.config_path}")
             with open(self.config_path, 'w') as f:
-                json.dump(self.config, f, indent=2)
-            logger.info("Configuration saved successfully")
+                json.dump(self._config, f, indent=2)
         except Exception as e:
             logger.error(f"Error saving configuration: {str(e)}")
-    
-    def get(self, key: str, default: Any = None) -> Any:
-        """Get a configuration value.
-        
-        Args:
-            key: The configuration key.
-            default: Default value if key is not found.
-        
-        Returns:
-            The configuration value or default if not found.
-        """
-        return self.config.get(key, default)
-    
-    def set(self, key: str, value: Any) -> None:
-        """Set a configuration value and save to disk.
-        
-        Args:
-            key: The configuration key.
-            value: The value to set.
-        """
-        self.config[key] = value
-        self.save_config()
-    
-    def update(self, config_dict: Dict[str, Any]) -> None:
-        """Update multiple configuration values and save to disk.
-        
-        Args:
-            config_dict: Dictionary of configuration keys and values.
-        """
-        self.config.update(config_dict)
-        self.save_config()
+            raise
     
     @property
     def product_type(self) -> str:
         """Get the product type."""
-        return self.get("product_type")
+        return self._config.get('product_type', 'robot_ai')
+    
+    @product_type.setter
+    def product_type(self, value: str):
+        """Set the product type."""
+        self._config['product_type'] = value
+        self._save_config()
     
     @property
     def version(self) -> str:
         """Get the current version."""
-        return self.get("version")
+        return self._config.get('version', '1.0.0')
     
     @version.setter
-    def version(self, value: str) -> None:
+    def version(self, value: str):
         """Set the current version."""
-        self.set("version", value)
+        self._config['version'] = value
+        self._save_config()
     
     @property
     def update_server(self) -> str:
         """Get the update server URL."""
-        return self.get("update_server")
+        return self._config.get('update_server', 'https://updates.robot-ai.example.com')
+    
+    @update_server.setter
+    def update_server(self, value: str):
+        """Set the update server URL."""
+        self._config['update_server'] = value
+        self._save_config()
     
     @property
     def update_check_times(self) -> List[str]:
         """Get the update check times."""
-        return self.get("update_check_times")
+        return self._config.get('update_check_times', ['03:00', '04:00', '05:00'])
+    
+    @update_check_times.setter
+    def update_check_times(self, value: List[str]):
+        """Set the update check times."""
+        self._config['update_check_times'] = value
+        self._save_config()
     
     @property
     def backup_retention_count(self) -> int:
         """Get the number of backups to retain."""
-        return self.get("backup_retention_count")
+        return self._config.get('backup_retention_count', 2)
+    
+    @backup_retention_count.setter
+    def backup_retention_count(self, value: int):
+        """Set the number of backups to retain."""
+        self._config['backup_retention_count'] = value
+        self._save_config()
     
     @property
     def device_id(self) -> Optional[str]:
         """Get the device ID."""
-        return self.get("device_id")
+        return self._config.get('device_id')
     
     @device_id.setter
-    def device_id(self, value: str) -> None:
+    def device_id(self, value: str):
         """Set the device ID."""
-        self.set("device_id", value) 
+        self._config['device_id'] = value
+        self._save_config()
+    
+    @property
+    def last_check_time(self) -> Optional[str]:
+        """Get the last update check time."""
+        return self._config.get('last_check_time')
+    
+    @last_check_time.setter
+    def last_check_time(self, value: Optional[str]):
+        """Set the last update check time."""
+        self._config['last_check_time'] = value
+        self._save_config()
+    
+    @property
+    def update_available(self) -> bool:
+        """Get whether an update is available."""
+        return self._config.get('update_available', False)
+    
+    @update_available.setter
+    def update_available(self, value: bool):
+        """Set whether an update is available."""
+        self._config['update_available'] = value
+        self._save_config()
+    
+    @property
+    def available_version(self) -> Optional[str]:
+        """Get the available update version."""
+        return self._config.get('available_version')
+    
+    @available_version.setter
+    def available_version(self, value: Optional[str]):
+        """Set the available update version."""
+        self._config['available_version'] = value
+        self._save_config()
+    
+    @property
+    def gui_socket_path(self) -> str:
+        """Get the GUI socket path."""
+        return self._config.get('gui', {}).get('socket_path', '/tmp/robot-ai-ota.sock')
+    
+    @gui_socket_path.setter
+    def gui_socket_path(self, value: str):
+        """Set the GUI socket path."""
+        if 'gui' not in self._config:
+            self._config['gui'] = {}
+        self._config['gui']['socket_path'] = value
+        self._save_config()
+    
+    @property
+    def gui_notification_timeout(self) -> int:
+        """Get the GUI notification timeout in seconds."""
+        return self._config.get('gui', {}).get('notification_timeout', 30)
+    
+    @gui_notification_timeout.setter
+    def gui_notification_timeout(self, value: int):
+        """Set the GUI notification timeout in seconds."""
+        if 'gui' not in self._config:
+            self._config['gui'] = {}
+        self._config['gui']['notification_timeout'] = value
+        self._save_config()
+    
+    @property
+    def gui_status_update_interval(self) -> int:
+        """Get the GUI status update interval in seconds."""
+        return self._config.get('gui', {}).get('status_update_interval', 5)
+    
+    @gui_status_update_interval.setter
+    def gui_status_update_interval(self, value: int):
+        """Set the GUI status update interval in seconds."""
+        if 'gui' not in self._config:
+            self._config['gui'] = {}
+        self._config['gui']['status_update_interval'] = value
+        self._save_config() 

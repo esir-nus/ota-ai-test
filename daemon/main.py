@@ -13,13 +13,15 @@ import signal
 import sys
 import time
 from pathlib import Path
+from typing import Dict, Any
+import datetime
 
 # Set up logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler("/var/log/robot-ai-ota.log"),
+        logging.FileHandler("robot-ai-ota.log"),
         logging.StreamHandler()
     ]
 )
@@ -33,6 +35,7 @@ from scheduler.task_scheduler import TaskScheduler, Task
 from backup.system_backup import BackupManager
 from notification.user_notification import NotificationSystem, UpdateSeverity
 from voice.command_processor import CommandProcessor, OTACommandType
+from gui.gui_interface import GUIInterface
 
 class OTADaemon:
     """Main OTA daemon class that orchestrates the update lifecycle."""
@@ -52,6 +55,12 @@ class OTADaemon:
             device_id = get_device_id()
             self.config_manager.device_id = device_id
         
+        # Initialize GUI interface
+        self.gui_interface = GUIInterface(
+            socket_path=self.config_manager.gui_socket_path
+        )
+        self._setup_gui_handlers()
+        
         # Initialize components
         self.ota_client = OTAClient(
             server_url=self.config_manager.update_server,
@@ -67,12 +76,61 @@ class OTADaemon:
             device_id=device_id
         )
         
-        self.notification_system = NotificationSystem()
+        self.notification_system = NotificationSystem(
+            gui_interface=self.gui_interface
+        )
         
         self.command_processor = CommandProcessor()
         
         # Set up scheduled tasks
         self._setup_scheduled_tasks()
+    
+    def _setup_gui_handlers(self):
+        """Set up command handlers for GUI communication."""
+        # Register command handlers
+        self.gui_interface.register_command_handler("check_now", self._handle_check_now)
+        self.gui_interface.register_command_handler("install_now", self._handle_install_now)
+        self.gui_interface.register_command_handler("get_status", self._handle_get_status)
+        self.gui_interface.register_command_handler("get_version", self._handle_get_version)
+        
+        # Set status callback
+        self.gui_interface.set_status_callback(self._handle_status_update)
+        
+        # Start the interface
+        self.gui_interface.start()
+    
+    def _handle_check_now(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle immediate update check request from GUI."""
+        self.check_for_updates()
+        return {"message": "Update check initiated"}
+    
+    def _handle_install_now(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle immediate update installation request from GUI."""
+        self._schedule_update(None)  # Schedule for immediate execution
+        return {"message": "Update installation initiated"}
+    
+    def _handle_get_status(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle status request from GUI."""
+        return {
+            "version": self.config_manager.version,
+            "product_type": self.config_manager.product_type,
+            "update_server": self.config_manager.update_server,
+            "last_check": self.config_manager.last_check_time,
+            "update_available": self.config_manager.update_available,
+            "scheduled_update": self.scheduler.get_next_update_time()
+        }
+    
+    def _handle_get_version(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle version request from GUI."""
+        return {
+            "current_version": self.config_manager.version,
+            "available_version": self.config_manager.available_version
+        }
+    
+    def _handle_status_update(self, status_data: Dict[str, Any]):
+        """Handle sending status updates to GUI."""
+        # This will be called by other components to update the GUI
+        pass
     
     def _setup_scheduled_tasks(self):
         """Set up the scheduled tasks for the OTA daemon."""
@@ -101,6 +159,9 @@ class OTADaemon:
         # Start the scheduler
         self.scheduler.start()
         
+        # Start the GUI interface
+        self.gui_interface.start()
+        
         try:
             # Main daemon loop
             while self.running:
@@ -122,6 +183,10 @@ class OTADaemon:
         # Stop the scheduler
         if hasattr(self, 'scheduler'):
             self.scheduler.stop()
+        
+        # Stop the GUI interface
+        if hasattr(self, 'gui_interface'):
+            self.gui_interface.stop()
     
     def handle_signal(self, signum, frame):
         """Handle termination signals to stop the daemon gracefully."""
@@ -149,7 +214,16 @@ class OTADaemon:
         # Check if update is available
         if manifest["version"] == current_version:
             logger.info(f"No update available (current version: {current_version})")
+            # Update last check time
+            self.config_manager.last_check_time = datetime.datetime.now().isoformat()
+            self.config_manager.update_available = False
+            self.config_manager.available_version = None
             return
+        
+        # Update configuration
+        self.config_manager.last_check_time = datetime.datetime.now().isoformat()
+        self.config_manager.update_available = True
+        self.config_manager.available_version = manifest["version"]
         
         # Determine update severity
         severity = UpdateSeverity.REGULAR

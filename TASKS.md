@@ -6,6 +6,7 @@
 - [x] Implement logging system (with rotation and proper error handling)
 - [x] Create configuration management module (`/etc/ota_config.json`)
 - [x] Implement device identification system (generate and store SHA256 hash of MAC address in `/etc/device_id`)
+- [x] Add simple communication interface for Tkinter GUI (socket or direct API)
 
 ## 2. Networking & Communication
 - [x] Implement network availability detection
@@ -13,6 +14,8 @@
 - [x] Create OTA server communication module (HTTP/HTTPS client)
 - [x] Implement exponential backoff retry mechanism for failed connections
 - [x] Design and implement data transfer protocol with checksum verification
+- [x] Create basic API endpoints for GUI to query update status and trigger immediate actions
+- [x] Implement "Install Now" function for immediate update execution
 
 ## 3. Check & Preparation Phase
 - [x] Implement scheduled task system (checking at 3 AM, 4 AM, 5 AM)
@@ -20,18 +23,22 @@
 - [x] Implement version comparison logic for update detection
 - [x] Design notification flag system and release notes storage
 - [x] Add integrity verification for downloaded manifests
+- [x] Design simple status reporting mechanism for GUI to display update availability
+- [x] Add manual update check trigger for "Check Now" button in GUI
 
 ## 4. User Notification System
 - [x] Create interface with main robot-ai GUI for update notifications
 - [x] Implement pop-up display mechanism for the projector
 - [x] Design severity classification display (critical, regular updates)
 - [x] Create voice command detection integration with Qwen transcription
+- [x] Add basic IPC mechanism for Tkinter GUI notifications
 
 ## 5. Decision & Scheduling Phase
 - [x] Implement voice command parsing for "Install Tonight"
 - [x] Create confirmation display UI integration
 - [x] Develop update scheduling system with task persistence
 - [x] Implement pre-update check system (disk space, network stability)
+- [x] Create method for GUI to trigger immediate updates ("Install Now" button)
 
 ## 6. Backup & Update Execution
 - [x] Create system backup module with compression
@@ -39,6 +46,7 @@
 - [x] Design peripheral disabling mechanism (mic, speaker, projector)
 - [x] Create update package download and verification system
 - [ ] Implement incremental update support if possible
+- [x] Add simple progress reporting mechanism for GUI during update operations
 
 ## 7. Installation & Validation
 - [x] Implement safe update application procedure
@@ -46,6 +54,7 @@
 - [x] Implement service restart mechanism
 - [x] Design update status persistence across reboots
 - [x] Create post-update notification system
+- [x] Develop basic status reporting for GUI to show installation progress
 
 ## 8. Rollback Mechanisms
 - [x] Implement automatic failure detection with specific criteria
@@ -55,11 +64,12 @@
 - [x] Add post-rollback validation and notification
 
 ## 9. Testing & Integration
-- [ ] Create unit tests for each component
-- [ ] Develop integration tests with mock update server
+- [x] Create unit tests for each component
+- [x] Develop integration tests with mock update server
 - [ ] Implement end-to-end testing procedure
 - [ ] Create test fixtures for various failure scenarios
 - [ ] Design testing environment for Raspberry Pi
+- [x] Develop basic GUI-to-daemon integration tests
 
 ## 10. Security & Reliability
 - [x] Implement secure communication with update server (HTTPS)
@@ -74,6 +84,7 @@
 - [ ] Document system requirements and dependencies
 - [ ] Prepare developer guide for extending OTA functions
 - [ ] Document rollback and recovery procedures
+- [ ] Create basic GUI user guide
 
 ## 12. Multi-Product Support
 - [x] Implement product type configuration
@@ -81,3 +92,14 @@
 - [x] Design version management for multiple product types
 - [x] Implement product-specific update paths
 - [x] Add product identification in backup naming
+- [x] Ensure GUI displays basic product identification
+
+## 13. Tkinter GUI MVP Implementation
+- [ ] Design minimal interface layout (simple wireframe)
+- [x] Implement main window with update status display
+- [x] Create update notification panel with version information
+- [x] Add "Check Now" button for manual update checks
+- [x] Add "Install Now" button for immediate update installation
+- [x] Implement progress indicator for update process
+- [x] Display current version and available update information
+- [x] Create connection status indicator for daemon
