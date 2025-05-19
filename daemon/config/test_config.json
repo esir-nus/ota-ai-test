@@ -1,0 +1,22 @@
+{
+  "product_type": "robot_ai",
+  "version": "1.0.0",
+  "update_server": "https://updates.robot-ai.example.com",
+  "simulation_server": "http://localhost:5000",
+  "is_simulation_mode": true,
+  "update_check_times": [
+    "03:00",
+    "04:00",
+    "05:00"
+  ],
+  "backup_retention_count": 2,
+  "device_id": "test-device-001",
+  "last_check_time": null,
+  "update_available": false,
+  "available_version": null,
+  "gui": {
+    "socket_path": "C:/CSLH/robot-ai/tmp/robot-ai-ota.sock",
+    "notification_timeout": 30,
+    "status_update_interval": 5
+  }
+}

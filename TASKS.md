@@ -25,6 +25,7 @@
 - [x] Add integrity verification for downloaded manifests
 - [x] Design simple status reporting mechanism for GUI to display update availability
 - [x] Add manual update check trigger for "Check Now" button in GUI
+- [x] Add configurable endpoint selection for testing/production environments
 
 ## 4. User Notification System
 - [x] Create interface with main robot-ai GUI for update notifications
@@ -47,6 +48,8 @@
 - [x] Create update package download and verification system
 - [ ] Implement incremental update support if possible
 - [x] Add simple progress reporting mechanism for GUI during update operations
+- [x] Implement simulation detection to prevent backups during test runs
+- [x] Add environment-aware download paths for production vs. simulation servers
 
 ## 7. Installation & Validation
 - [x] Implement safe update application procedure
@@ -70,6 +73,9 @@
 - [ ] Create test fixtures for various failure scenarios
 - [ ] Design testing environment for Raspberry Pi
 - [x] Develop basic GUI-to-daemon integration tests
+- [x] Implement environment detection for proper server selection
+- [x] Create integration tests specific to the simulation environment
+- [ ] Add support for automated testing with simulation infrastructure
 
 ## 10. Security & Reliability
 - [x] Implement secure communication with update server (HTTPS)
@@ -77,6 +83,7 @@
 - [x] Create file integrity validation
 - [ ] Design fail-safe mechanisms for power loss during update
 - [x] Implement backup verification before applying updates
+- [x] Add simulation-aware mode to prevent security alerts during testing
 
 ## 11. Documentation
 - [x] Create comprehensive API documentation

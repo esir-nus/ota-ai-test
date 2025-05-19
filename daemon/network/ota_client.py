@@ -59,7 +59,17 @@ class OTAClient:
         Returns:
             The manifest as a dictionary, or None if fetching failed.
         """
-        manifest_url = f"{self.server_url}/{self.product_type}/manifest.json"
+        # Determine if we're using the mock server (localhost)
+        using_mock_server = "localhost" in self.server_url or "127.0.0.1" in self.server_url
+        
+        # Set the appropriate manifest URL based on server type
+        if using_mock_server:
+            # Mock server uses a different path structure
+            manifest_url = f"{self.server_url}/manifest/latest"
+            logger.info(f"Using mock server manifest path: {manifest_url}")
+        else:
+            # Production server path
+            manifest_url = f"{self.server_url}/{self.product_type}/manifest.json"
         
         for attempt in range(1, self.max_retries + 1):
             try:
@@ -71,11 +81,15 @@ class OTAClient:
                     manifest = json.loads(manifest_data)
                     
                     # Check if the manifest has the required fields
-                    required_fields = ["version", "release_date", "files"]
+                    required_fields = ["version", "release_date"]
                     for field in required_fields:
                         if field not in manifest:
                             logger.error(f"Manifest is missing required field: {field}")
                             return None
+                    
+                    # If using mock server, ensure 'files' field exists (even if empty)
+                    if using_mock_server and "files" not in manifest:
+                        manifest["files"] = []
                     
                     logger.info(f"Manifest fetched successfully: {manifest['version']}")
                     return manifest

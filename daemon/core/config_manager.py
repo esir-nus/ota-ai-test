@@ -37,6 +37,8 @@ class ConfigManager:
                     'product_type': 'robot_ai',
                     'version': '1.0.0',
                     'update_server': 'https://updates.robot-ai.example.com',
+                    'simulation_server': 'http://localhost:5000',
+                    'is_simulation_mode': False,
                     'update_check_times': ['03:00', '04:00', '05:00'],
                     'backup_retention_count': 2,
                     'device_id': None,
@@ -91,12 +93,37 @@ class ConfigManager:
     @property
     def update_server(self) -> str:
         """Get the update server URL."""
+        # If in simulation mode, return the simulation server
+        if self.is_simulation_mode:
+            return self._config.get('simulation_server', 'http://localhost:5000')
         return self._config.get('update_server', 'https://updates.robot-ai.example.com')
     
     @update_server.setter
     def update_server(self, value: str):
         """Set the update server URL."""
         self._config['update_server'] = value
+        self._save_config()
+    
+    @property
+    def simulation_server(self) -> str:
+        """Get the simulation server URL."""
+        return self._config.get('simulation_server', 'http://localhost:5000')
+    
+    @simulation_server.setter
+    def simulation_server(self, value: str):
+        """Set the simulation server URL."""
+        self._config['simulation_server'] = value
+        self._save_config()
+    
+    @property
+    def is_simulation_mode(self) -> bool:
+        """Get whether the daemon is in simulation mode."""
+        return self._config.get('is_simulation_mode', False)
+    
+    @is_simulation_mode.setter
+    def is_simulation_mode(self, value: bool):
+        """Set whether the daemon is in simulation mode."""
+        self._config['is_simulation_mode'] = value
         self._save_config()
     
     @property

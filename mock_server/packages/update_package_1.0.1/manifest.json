@@ -1,0 +1,14 @@
+{
+  "version": "1.0.1",
+  "release_date": "2025-05-19T17:37:05.032969",
+  "severity": "normal",
+  "release_notes": "First test release",
+  "files": [
+    {
+      "name": "test_file.txt",
+      "destination": "/opt/robot-ai/test_file.txt",
+      "checksum": "b58c5f197732fde23669a015580c76890e28351046b7195336a16acbc5ec97a6",
+      "executable": false
+    }
+  ]
+}

@@ -608,25 +608,35 @@ class OTADaemon:
         pass
 
 def main():
-    """Main entry point for the OTA daemon."""
-    parser = argparse.ArgumentParser(description="Robot-AI OTA Daemon")
-    parser.add_argument("--config", default="/etc/ota_config.json", 
-                        help="Path to configuration file")
-    parser.add_argument("--debug", action="store_true", 
-                        help="Enable debug logging")
+    """Run the OTA daemon."""
+    parser = argparse.ArgumentParser(description="OTA Daemon for robot-ai")
+    parser.add_argument("--config", default="/etc/ota_config.json",
+                       help="Path to configuration file")
+    parser.add_argument("--simulation", action="store_true",
+                       help="Use simulation mode with local mock server")
+    parser.add_argument("--verbose", action="store_true",
+                       help="Enable verbose logging")
+    
     args = parser.parse_args()
     
-    # Set debug logging if requested
-    if args.debug:
-        logger.setLevel(logging.DEBUG)
-        for handler in logger.handlers:
-            handler.setLevel(logging.DEBUG)
+    # Set log level based on verbosity flag
+    if args.verbose:
+        logging.getLogger("ota-daemon").setLevel(logging.DEBUG)
     
-    # Create daemon instance
-    daemon = OTADaemon(config_path=args.config)
+    try:
+        daemon = OTADaemon(config_path=args.config)
+        
+        # Set simulation mode if specified
+        if args.simulation:
+            daemon.config_manager.is_simulation_mode = True
+            logger.info(f"Running in simulation mode, using server: {daemon.config_manager.update_server}")
+        
+        daemon.start()
+    except Exception as e:
+        logger.error(f"Error starting OTA daemon: {str(e)}")
+        return 1
     
-    # Start the daemon
-    daemon.start()
+    return 0
 
 if __name__ == "__main__":
     main() 
