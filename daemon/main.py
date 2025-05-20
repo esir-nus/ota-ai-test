@@ -92,6 +92,7 @@ class OTADaemon:
         self.gui_interface.register_command_handler("install_now", self._handle_install_now)
         self.gui_interface.register_command_handler("get_status", self._handle_get_status)
         self.gui_interface.register_command_handler("get_version", self._handle_get_version)
+        self.gui_interface.register_command_handler("connectivity_check", self._handle_connectivity_check)
         
         # Set status callback
         self.gui_interface.set_status_callback(self._handle_status_update)
@@ -101,8 +102,17 @@ class OTADaemon:
     
     def _handle_check_now(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """Handle immediate update check request from GUI."""
-        self.check_for_updates()
-        return {"message": "Update check initiated"}
+        manifest = self.check_for_updates()
+        if manifest:
+            return {
+                "message": "Update check completed",
+                "manifest": manifest,
+                "update_available": self.config_manager.update_available,
+                "current_version": self.config_manager.version,
+                "available_version": self.config_manager.available_version,
+            }
+        else:
+            return {"message": "Update check failed", "manifest": None}
     
     def _handle_install_now(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
         """Handle immediate update installation request from GUI."""
@@ -131,6 +141,62 @@ class OTADaemon:
         """Handle sending status updates to GUI."""
         # This will be called by other components to update the GUI
         pass
+    
+    def _handle_connectivity_check(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle connectivity check request from GUI."""
+        logger.info("Running connectivity check")
+        
+        # Check network connectivity
+        network_status = self.ota_client.check_network()
+        
+        # Try to fetch manifest
+        manifest_status = False
+        if network_status:
+            manifest = self.ota_client.fetch_manifest()
+            manifest_status = manifest is not None
+        
+        # Check download capability
+        download_status = False
+        if network_status and manifest_status:
+            try:
+                # Create a test directory for downloads
+                test_dir = Path("/tmp/ota-test")
+                test_dir.mkdir(exist_ok=True)
+                
+                # Set download test path based on server type
+                server_url = self.config_manager.update_server
+                using_mock_server = "localhost" in server_url or "127.0.0.1" in server_url
+                
+                if using_mock_server:
+                    test_file_path = "health"
+                else:
+                    test_file_path = "test/test.txt"
+                
+                # Try to download
+                local_path = test_dir / "test_download.txt"
+                success, _ = self.ota_client.download_file(test_file_path, local_path)
+                download_status = success
+                
+                # Clean up
+                if local_path.exists():
+                    local_path.unlink()
+                if test_dir.exists():
+                    try:
+                        test_dir.rmdir()
+                    except:
+                        pass
+            except Exception as e:
+                logger.error(f"Error during download test: {str(e)}")
+                download_status = False
+        
+        return {
+            "network_status": network_status,
+            "manifest_status": manifest_status,
+            "download_status": download_status,
+            "server_url": self.config_manager.update_server,
+            "product_type": self.config_manager.product_type,
+            "device_id": self.config_manager.device_id
+        }
     
     def _setup_scheduled_tasks(self):
         """Set up the scheduled tasks for the OTA daemon."""
@@ -194,19 +260,23 @@ class OTADaemon:
         self.stop()
     
     def check_for_updates(self):
-        """Check for available updates from the OTA server."""
+        """Check for available updates from the OTA server.
+        
+        Returns:
+            The manifest dictionary if successfully fetched, None otherwise.
+        """
         logger.info("Checking for updates")
         
         # Check network connectivity
         if not self.ota_client.check_network():
             logger.error("Network not available, skipping update check")
-            return
+            return None
         
         # Fetch manifest from server
         manifest = self.ota_client.fetch_manifest()
         if not manifest:
             logger.error("Failed to fetch manifest, skipping update check")
-            return
+            return None
         
         # Get current version
         current_version = self.config_manager.version
@@ -218,7 +288,7 @@ class OTADaemon:
             self.config_manager.last_check_time = datetime.datetime.now().isoformat()
             self.config_manager.update_available = False
             self.config_manager.available_version = None
-            return
+            return manifest
         
         # Update configuration
         self.config_manager.last_check_time = datetime.datetime.now().isoformat()
@@ -252,6 +322,7 @@ class OTADaemon:
         )
         
         logger.info(f"Update available: {current_version} -> {manifest['version']}")
+        return manifest
     
     def check_voice_commands(self):
         """Check for voice commands related to OTA operations."""

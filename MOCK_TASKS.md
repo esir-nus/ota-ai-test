@@ -5,6 +5,7 @@
 - [x] Create configuration system for server endpoints and behavior
 - [ ] Add support for simulated network conditions (latency, packet loss)
 - [x] Implement basic logging for all server interactions
+- [x] Add endpoints for connectivity testing
 
 ## 2. Update Package Generation
 - [x] Create script to generate test update packages with version information
@@ -15,6 +16,7 @@
 - [x] Create GUI interface for easier package generation
 - [x] Implement command-line fallback for GUI operation
 - [x] Create diagnostic tools for application troubleshooting
+- [x] Add rich manifest data for GUI testing
 
 ## 3. GitHub Integration
 - [ ] Set up GitHub repository for package hosting
@@ -37,6 +39,7 @@
 - [ ] Implement checksum verification failure scenario
 - [ ] Create power failure simulation during update
 - [ ] Add scenario for testing rollback mechanisms
+- [x] Create connectivity testing scenario
 
 ## 6. Monitoring & Analysis
 - [x] Implement logging for all simulation components
@@ -49,8 +52,10 @@
 - [x] Add configuration option in daemon to use local simulation servers
 - [x] Implement seamless switching between production and simulation modes
 - [x] Create test utility to verify daemon-simulation connectivity
-- [ ] Ensure all daemon features work with mock environment
+- [x] Ensure all daemon features work with mock environment
 - [x] Add simulation environment detection to prevent accidental production use
+- [x] Test manifest display functionality in GUI
+- [x] Verify connectivity check integration with GUI
 
 ## 8. Documentation
 - [x] Write setup guide for simulation environment

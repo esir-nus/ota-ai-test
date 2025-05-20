@@ -16,6 +16,7 @@
 - [x] Design and implement data transfer protocol with checksum verification
 - [x] Create basic API endpoints for GUI to query update status and trigger immediate actions
 - [x] Implement "Install Now" function for immediate update execution
+- [x] Add connectivity testing feature for GUI display
 
 ## 3. Check & Preparation Phase
 - [x] Implement scheduled task system (checking at 3 AM, 4 AM, 5 AM)
@@ -26,6 +27,7 @@
 - [x] Design simple status reporting mechanism for GUI to display update availability
 - [x] Add manual update check trigger for "Check Now" button in GUI
 - [x] Add configurable endpoint selection for testing/production environments
+- [x] Add manifest data display support in GUI
 
 ## 4. User Notification System
 - [x] Create interface with main robot-ai GUI for update notifications
@@ -110,3 +112,5 @@
 - [x] Implement progress indicator for update process
 - [x] Display current version and available update information
 - [x] Create connection status indicator for daemon
+- [x] Add manifest data display functionality
+- [x] Implement connectivity testing display
