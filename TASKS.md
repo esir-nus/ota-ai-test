@@ -1,4 +1,5 @@
 # OTA Daemon Implementation Tasks
+> **Environment Note:** All testing and development is done on Ubuntu Linux VM. Code should be compatible with this environment.
 
 ## 1. Core Infrastructure Setup
 - [x] Create basic daemon structure with Python
@@ -26,7 +27,7 @@
 - [x] Add integrity verification for downloaded manifests
 - [x] Design simple status reporting mechanism for GUI to display update availability
 - [x] Add manual update check trigger for "Check Now" button in GUI
-- [x] Add configurable endpoint selection for testing/production environments
+- [x] Add configurable endpoint selection for production environments
 - [x] Add manifest data display support in GUI
 
 ## 4. User Notification System
@@ -51,7 +52,7 @@
 - [ ] Implement incremental update support if possible
 - [x] Add simple progress reporting mechanism for GUI during update operations
 - [x] Implement simulation detection to prevent backups during test runs
-- [x] Add environment-aware download paths for production vs. simulation servers
+- [x] Add environment-aware download paths for production servers
 
 ## 7. Installation & Validation
 - [x] Implement safe update application procedure
@@ -70,14 +71,12 @@
 
 ## 9. Testing & Integration
 - [x] Create unit tests for each component
-- [x] Develop integration tests with mock update server
-- [ ] Implement end-to-end testing procedure
+- [ ] Implement end-to-end testing procedure on Ubuntu VM
 - [ ] Create test fixtures for various failure scenarios
 - [ ] Design testing environment for Raspberry Pi
 - [x] Develop basic GUI-to-daemon integration tests
 - [x] Implement environment detection for proper server selection
-- [x] Create integration tests specific to the simulation environment
-- [ ] Add support for automated testing with simulation infrastructure
+- [ ] Add support for automated testing with infrastructure
 
 ## 10. Security & Reliability
 - [x] Implement secure communication with update server (HTTPS)
@@ -85,7 +84,6 @@
 - [x] Create file integrity validation
 - [ ] Design fail-safe mechanisms for power loss during update
 - [x] Implement backup verification before applying updates
-- [x] Add simulation-aware mode to prevent security alerts during testing
 
 ## 11. Documentation
 - [x] Create comprehensive API documentation
@@ -94,6 +92,7 @@
 - [ ] Prepare developer guide for extending OTA functions
 - [ ] Document rollback and recovery procedures
 - [ ] Create basic GUI user guide
+- [x] Maintain consolidated requirements.txt file for all components
 
 ## 12. Multi-Product Support
 - [x] Implement product type configuration
@@ -103,7 +102,7 @@
 - [x] Add product identification in backup naming
 - [x] Ensure GUI displays basic product identification
 
-## 13. Tkinter GUI MVP Implementation
+## 13. Tkinter GUI Implementation
 - [ ] Design minimal interface layout (simple wireframe)
 - [x] Implement main window with update status display
 - [x] Create update notification panel with version information
@@ -114,3 +113,10 @@
 - [x] Create connection status indicator for daemon
 - [x] Add manifest data display functionality
 - [x] Implement connectivity testing display
+
+## 14. Environment & Deployment
+- [ ] Verify compatibility with Ubuntu VM environment
+- [ ] Document environment setup procedures
+- [ ] Create deployment scripts for Ubuntu environment
+- [ ] Implement environment-specific paths and configurations
+- [ ] Test system under different VM resource constraints
