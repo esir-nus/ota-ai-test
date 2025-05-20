@@ -25,8 +25,8 @@ An over-the-air (OTA) update system for Robot-AI devices, providing secure and r
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/robot-ai-ota.git
-   cd robot-ai-ota
+   git clone https://github.com/esir-nus/ota-ai-test.git
+   cd ota-ai-test
    ```
 
 2. Create and activate a virtual environment:
